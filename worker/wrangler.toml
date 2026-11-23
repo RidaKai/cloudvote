@@ -1,0 +1,20 @@
+name = "cloudvote-closer"
+main = "src/index.js"
+compatibility_date = "2026-11-01"
+
+# Paramètres publics (non secrets).
+# Remplacer par l'URL réelle du service de reporting déployé sur Render (Partie 4).
+[vars]
+RENDER_URL = "https://cloudvote-reporting.onrender.com"
+
+# Toutes les 30 minutes (heures en UTC) : à hh:00 et hh:30.
+# Pour la démo : ["* * * * *"] (chaque minute), puis remettre "*/30 * * * *".
+[triggers]
+crons = ["*/30 * * * *"]
+
+# Conserver les journaux de chaque exécution dans le tableau de bord Cloudflare.
+[observability]
+enabled = true
+
+# Le secret CLOSE_SECRET n'est JAMAIS écrit ici :
+#   npx wrangler secret put CLOSE_SECRET

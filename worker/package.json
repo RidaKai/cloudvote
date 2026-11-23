@@ -1,0 +1,18 @@
+{
+  "name": "cloudvote-closer",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "CloudVote - FaaS : Cloudflare Worker planifié qui déclenche la clôture des scrutins sur Render",
+  "scripts": {
+    "test": "node --test test/closer.test.mjs",
+    "mock": "node test/mock-render.mjs 8001 ok",
+    "mock:cold": "node test/mock-render.mjs 8001 cold",
+    "dev": "wrangler dev --test-scheduled",
+    "deploy": "wrangler deploy",
+    "logs": "wrangler tail"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

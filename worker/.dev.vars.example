@@ -1,0 +1,4 @@
+# Copier ce fichier en .dev.vars pour les tests locaux (jamais commité).
+# Ces valeurs remplacent [vars] de wrangler.toml pendant `wrangler dev`.
+RENDER_URL=http://localhost:8001
+CLOSE_SECRET=dev-secret
