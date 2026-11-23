@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+oracledb
+bcrypt
+pyjwt
+httpx
+python-dotenv
