@@ -1,5 +1,4 @@
-// Tests unitaires de la logique du Worker (Node 18+, sans dépendance) :
-//   npm test
+// Tests unitaires : npm test
 import { test, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import worker, { callClose } from "../src/index.js";

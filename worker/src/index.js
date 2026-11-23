@@ -1,20 +1,12 @@
-/**
- * CloudVote — Partie FaaS
- * Cloudflare Worker déclenché par un Cron Trigger (toutes les 30 minutes).
- * Il appelle l'endpoint sécurisé de clôture du service de reporting sur Render :
- *     POST {RENDER_URL}/internal/close
- *     Authorization: Bearer {CLOSE_SECRET}
- *
- * Le Worker n'a aucun endpoint public : toute requête HTTP reçoit 404.
- */
+// CloudVote, partie FaaS : appelle la cloture sur Render toutes les 30 min.
 
-const MAX_ATTEMPTS = 3; // nombre maximal d'appels par exécution
-const TIMEOUT_MS = 70_000; // Render Free peut mettre ~1 min à se réveiller
-const BACKOFF_MS = 15_000; // attente entre deux essais : 15 s, puis 30 s
+const MAX_ATTEMPTS = 3;
+const TIMEOUT_MS = 70_000; // Render Free met ~1 min a se reveiller
+const BACKOFF_MS = 15_000;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-/** Erreur définitive : inutile de réessayer (mauvais secret, mauvaise config). */
+// Erreur definitive : inutile de reessayer.
 class FatalError extends Error {}
 
 function readConfig(env) {
@@ -23,7 +15,7 @@ function readConfig(env) {
     throw new FatalError("RENDER_URL manquant ou invalide");
   }
   if (!env.CLOSE_SECRET) {
-    throw new FatalError("CLOSE_SECRET manquant (wrangler secret put CLOSE_SECRET)");
+    throw new FatalError("CLOSE_SECRET manquant");
   }
   return {
     closeUrl: `${url}/internal/close`,
@@ -34,11 +26,7 @@ function readConfig(env) {
   };
 }
 
-/**
- * Appelle l'endpoint de clôture avec réessais.
- * Réessayer un POST est sans risque car l'endpoint Render est idempotent :
- * un deuxième appel ne recompte jamais les bulletins déjà comptés.
- */
+// Reessayer est sans risque : l'endpoint Render est idempotent.
 export async function callClose(env) {
   const cfg = readConfig(env);
 
@@ -56,33 +44,28 @@ export async function callClose(env) {
         return { ok: true, attempt, body };
       }
       if (res.status === 401 || res.status === 403) {
-        throw new FatalError(
-          `refusé (${res.status}) : CLOSE_SECRET différent entre le Worker et Render`
-        );
+        throw new FatalError(`refuse (${res.status}) : CLOSE_SECRET incorrect`);
       }
       console.warn(`[closer] essai ${attempt} : HTTP ${res.status} ${body.slice(0, 200)}`);
     } catch (err) {
       if (err instanceof FatalError) throw err;
-      console.warn(`[closer] essai ${attempt} : ${err.name} — ${err.message}`);
+      console.warn(`[closer] essai ${attempt} : ${err.name}: ${err.message}`);
     }
 
     if (attempt < cfg.maxAttempts) await sleep(attempt * cfg.backoffMs);
   }
 
-  // Lever une erreur marque l'exécution du cron comme « échouée » dans le tableau de bord.
-  throw new Error(`[closer] échec après ${cfg.maxAttempts} essais`);
+  // Marque l'execution en echec dans le tableau de bord.
+  throw new Error(`[closer] echec apres ${cfg.maxAttempts} essais`);
 }
 
 export default {
-  /** Exécuté par le Cron Trigger défini dans wrangler.toml. */
   async scheduled(controller, env, ctx) {
-    console.log(
-      `[closer] cron "${controller.cron}" — ${new Date(controller.scheduledTime).toISOString()}`
-    );
+    console.log(`[closer] cron "${controller.cron}"`);
     ctx.waitUntil(callClose(env));
   },
 
-  /** Aucun déclenchement public possible. */
+  // Pas de declenchement public.
   async fetch() {
     return new Response("Not found", { status: 404 });
   },
