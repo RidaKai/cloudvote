@@ -1,0 +1,3 @@
+# Copier en .dev.vars (jamais commite)
+RENDER_URL=http://localhost:8001
+CLOSE_SECRET=dev-secret

@@ -1,0 +1,16 @@
+name = "cloudvote-closer"
+main = "src/index.js"
+compatibility_date = "2026-11-01"
+
+# URL du service de reporting (Partie 4)
+[vars]
+RENDER_URL = "https://cloudvote-reporting.onrender.com"
+
+# Toutes les 30 min (UTC). Demo : "* * * * *"
+[triggers]
+crons = ["*/30 * * * *"]
+
+[observability]
+enabled = true
+
+# Secret : npx wrangler secret put CLOSE_SECRET
