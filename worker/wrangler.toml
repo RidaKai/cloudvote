@@ -2,6 +2,9 @@ name = "cloudvote-closer"
 main = "src/index.js"
 compatibility_date = "2026-11-01"
 
+# Pas d'URL publique : le Worker est declenche uniquement par le cron
+workers_dev = false
+
 # URL du service de reporting (Partie 4)
 [vars]
 RENDER_URL = "https://cloudvote-reporting.onrender.com"
