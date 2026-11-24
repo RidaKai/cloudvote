@@ -8,9 +8,38 @@ from datetime import datetime, timezone
 from app.security import hash_password, verify_password, create_access_token, verify_token
 from app.db import get_connection
 
+import httpx
+
 load_dotenv()
 app = FastAPI(title="CloudVote API")
 
+# Fonction pour vérifier le CAPTCHA auprès de Cloudflare
+async def verify_turnstile_token(token: str) -> bool:
+    if not token:
+        return False
+        
+    secret_key = os.getenv("TURNSTILE_SECRET_KEY")
+    if not secret_key:
+        return False
+
+    verify_url = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                verify_url,
+                data={
+                    "secret": secret_key,
+                    "response": token,
+                },
+                timeout=10.0 
+            )
+            result = response.json()
+            return result.get("success", False)
+    except Exception as e:
+        print(f"Erreur Cloudflare : {e}")
+        return False
+    
 # --- MODELES DE DONNEES ---
 class LoginRequest(BaseModel):
     email: str
@@ -68,9 +97,12 @@ def health_check():
     return {"status": "ok"}
 
 @app.post("/api/auth/login")
-def login(request: LoginRequest):
-    if not request.turnstile_token or request.turnstile_token != "captcha_valide": 
+async def login(request: LoginRequest): # 👈 'async' ajouté ici
+    # 👇 On utilise la vraie vérification Cloudflare 👇
+    is_captcha_valid = await verify_turnstile_token(request.turnstile_token)
+    if not is_captcha_valid:
          raise HTTPException(status_code=400, detail="CAPTCHA invalide")
+    
     try:
         with get_connection() as conn:
             with conn.cursor() as cursor:
@@ -140,9 +172,12 @@ def get_election_details(election_id: int, current_user: dict = Depends(get_curr
          raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/votes", status_code=201)
-def cast_vote(request: VoteRequest, current_user: dict = Depends(get_current_user)):
-    if not request.turnstile_token or request.turnstile_token != "captcha_valide":
+async def cast_vote(request: VoteRequest, current_user: dict = Depends(get_current_user)): # 👈 'async' ajouté ici
+    # 👇 On utilise la vraie vérification Cloudflare 👇
+    is_captcha_valid = await verify_turnstile_token(request.turnstile_token)
+    if not is_captcha_valid:
         raise HTTPException(status_code=400, detail="CAPTCHA invalide")
+        
     if current_user.get("role") != "ELECTOR":
         raise HTTPException(status_code=403, detail="Seuls les électeurs peuvent voter.")
 
@@ -162,7 +197,6 @@ def cast_vote(request: VoteRequest, current_user: dict = Depends(get_current_use
                 if now_db < el[1] or now_db > el[2]:
                      raise HTTPException(status_code=403, detail="Le vote est fermé (hors période).")
                 
-                # 👇 CORRECTION ICI : noms de variables longs pour éviter les conflits avec Oracle 👇
                 cursor.execute("SELECT 1 FROM participations WHERE id_election = :election_id_val AND id_poste = :position_id_val AND id_electeur = :elector_id_val", 
                                election_id_val=request.election_id, position_id_val=request.position_id, elector_id_val=elector_id)
                 if cursor.fetchone():
