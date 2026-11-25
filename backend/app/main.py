@@ -154,10 +154,30 @@ def get_election_details(election_id: int, current_user: dict = Depends(get_curr
                 
                 election = {"election_id": el_row[0], "title": el_row[1], "opens_at": str(el_row[2]), "closes_at": str(el_row[3]), "status": el_row[4]}
                 
+                cursor.execute("SELECT SYSTIMESTAMP FROM dual")
+                now_db = cursor.fetchone()[0]
+                is_election_open = (el_row[4] == "PUBLISHED") and (el_row[2] <= now_db <= el_row[3])
+                elector_id = current_user.get("elector_id")
+                is_elector = (current_user.get("role") == "ELECTOR")
+
                 cursor.execute("SELECT id_poste, nom, date_cloture, statut FROM postes WHERE id_election = :el_id", el_id=election_id)
                 positions = []
                 for p_row in cursor:
-                    pos = {"position_id": p_row[0], "name": p_row[1], "closes_at": str(p_row[2]) if p_row[2] else None, "status": p_row[3], "candidates": []}
+                    cursor.execute(
+                        "SELECT 1 FROM participations WHERE id_election = :eid AND id_poste = :pid AND id_electeur = :elector_id_val",
+                        eid=election_id, pid=p_row[0], elector_id_val=elector_id
+                    )
+                    has_voted = cursor.fetchone() is not None
+                    can_vote = is_elector and is_election_open and (p_row[3] == "OPEN") and not has_voted
+                    pos = {
+                        "position_id": p_row[0],
+                        "name": p_row[1],
+                        "closes_at": str(p_row[2]) if p_row[2] else None,
+                        "status": p_row[3],
+                        "has_voted": has_voted,
+                        "can_vote": can_vote,
+                        "candidates": []
+                    }
                     
                     cursor.execute("SELECT id_candidat, nom_complet, url_image FROM candidats WHERE id_poste = :pos_id", pos_id=p_row[0])
                     for c_row in cursor:
