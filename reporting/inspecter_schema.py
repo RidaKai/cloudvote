@@ -23,7 +23,7 @@ if missing:
 wallet = os.environ["WALLET_DIR"]
 for f in ("tnsnames.ora", "ewallet.pem"):
     if not os.path.isfile(os.path.join(wallet, f)):
-        sys.exit(f"ERREUR : {f} introuvable dans {wallet} (as-tu bien extrait le zip du wallet ?)")
+        sys.exit(f"ERREUR : {f} introuvable dans {wallet} (le zip du wallet a-t-il été extrait ?)")
 
 print("Connexion à la base...")
 conn = oracledb.connect(
@@ -90,5 +90,5 @@ text = "\n".join(out)
 with open("schema_bd.txt", "w", encoding="utf-8") as f:
     f.write(text)
 print(text)
-print("\n>>> Résultat enregistré dans schema_bd.txt : envoie ce fichier à Claude.")
+print("\n>>> Résultat enregistré dans schema_bd.txt")
 conn.close()

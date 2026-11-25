@@ -1,3 +1,13 @@
+"""
+CloudVote — Service de reporting / clôture (Partie 4)
+
+Service FastAPI déployé sur Render (PaaS). Il clôture les postes dont la date
+de fin est passée, calcule les résultats (table resultats) et ferme les
+élections terminées. Il est appelé toutes les 30 minutes par le Cloudflare
+Worker (FaaS) via POST /internal/close, protégé par le secret CLOSE_SECRET.
+
+Auteur : Ayyoub Essafi
+"""
 import hmac, logging, os
 import oracledb
 from fastapi import FastAPI, Header, HTTPException
