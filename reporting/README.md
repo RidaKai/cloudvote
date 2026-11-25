@@ -3,7 +3,7 @@
 <p class="meta">Guide pas à pas · CloudVote · FastAPI sur Render Web Service Free (PaaS)</p>
 </div>
 
-# Ce que fait ta partie, en 4 phrases
+# Ce que fait ma partie, en 4 phrases
 
 > **Schéma en français.** La base de CloudVote utilise des noms français : `postes`, `candidats`, `bulletins`, `resultats` (colonnes `total_votes`, `pourcentage`, `est_egalite`), `id_poste`, `statut`, `date_cloture`… Les valeurs de statut restent en anglais (`PUBLISHED`, `OPEN`, `CLOSED`). `main.py` et les scripts SQL de ce dossier sont déjà adaptés.
 
