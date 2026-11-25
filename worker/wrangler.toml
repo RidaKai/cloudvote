@@ -2,9 +2,14 @@ name = "cloudvote-closer"
 main = "src/index.js"
 compatibility_date = "2026-11-01"
 
+# Pas d'URL publique : le Worker est declenche uniquement par le cron
+workers_dev = false
+
 # URL du service de reporting (Partie 4)
 [vars]
 RENDER_URL = "https://cloudvote-reporting.onrender.com"
+# 5 essais (attentes 15/30/45/60 s) pour laisser Render Free se reveiller
+MAX_ATTEMPTS = "5"
 
 # Toutes les 30 min (UTC). Demo : "* * * * *"
 [triggers]
